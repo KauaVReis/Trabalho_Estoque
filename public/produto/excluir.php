@@ -1,53 +1,64 @@
 <?php
-$page_title = 'Confirmar Exclusão';
-$base_path = '../'; 
-$pagina_ativa = 'produtos'; 
+/*
+ * ARQUIVO DE EXCLUSÃO DE PRODUTO (CORRIGIDO)
+ *
+ * A LÓGICA PHP (verificar confirmação, excluir, redirecionar)
+ * VEM ANTES de carregar o HTML (header.php).
+ */
 
-include '../../templates/header.php';
-
-// (Segurança) Se o usuário NÃO ESTIVER LOGADO
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../index.php");
-    exit(); 
+// 1. Inicia a sessão (necessário para verificar o login)
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
 }
 
-// ---- LÓGICA DA PÁGINA ----
+// 2. Segurança: Verifica se o usuário está logado
+// Se não estiver, é expulso para o login ANTES de qualquer HTML.
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../index.php"); // Redireciona
+    exit(); // Para a execução
+}
+
+// 3. Inclui a lógica (depois da sessão, antes do HTML)
 require_once '../../src/products.php';
 
-// 1. Pega o ID da URL
+// 4. Pega o ID da URL
 $id_produto = (int)$_GET['id'];
 if ($id_produto == 0) {
-    header("Location: index.php");
+    header("Location: index.php"); // ID inválido
     exit();
 }
 
-// 2. Verifica se o usuário CLICOU EM "CONFIRMAR"
+// 5. Verifica se o usuário CLICOU EM "CONFIRMAR"
 // (O link de confirmar vai ter "?id=5&confirm=1")
 $confirmado = isset($_GET['confirm']) && $_GET['confirm'] == '1';
 
 if ($confirmado) {
     // --- AÇÃO DE EXCLUIR ---
     
-    // 3. Tenta excluir o produto
+    // 6. Tenta excluir o produto
     $sucesso = excluirProduto($id_produto);
     
-    // 4. Redireciona de volta para a lista (com ou sem erro)
+    // 7. Redireciona de volta para a lista (com ou sem erro)
+    // Isso funciona agora, pois nenhum HTML foi enviado.
     header("Location: index.php");
     exit();
     
-} else {
-    // --- MOSTRAR PÁGINA DE CONFIRMAÇÃO ---
-    
-    // 3. Busca os dados do produto (só para mostrar o nome)
-    $produto = buscarProdutoPorId($id_produto);
-    
-    // 4. Se não existir, manda embora
-    if (!$produto) {
-        header("Location: index.php");
-        exit();
-    }
+} 
+
+
+// 8. Busca os dados do produto (só para mostrar o nome)
+$produto = buscarProdutoPorId($id_produto);
+if (!$produto) {
+    header("Location: index.php"); // Produto não existe
+    exit();
 }
-// ---- FIM DA LÓGICA ----
+
+// 9. Agora sim, podemos carregar o HTML
+$page_title = 'Confirmar Exclusão';
+$base_path = '../'; 
+$pagina_ativa = 'produtos'; 
+
+include '../../templates/header.php'; // HTML começa AQUI
 ?>
 
 <!-- CONTEÚDO DA PÁGINA (SÓ MOSTRA SE NÃO FOI CONFIRMADO) -->
