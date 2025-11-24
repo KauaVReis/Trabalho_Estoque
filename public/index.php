@@ -27,7 +27,7 @@ if (isset($_SESSION['login_error'])) {
             <div class="card shadow-lg border-0 rounded-3">
                 <div class="card-body p-4 p-sm-5">
                     
-                    <div class="text-center mb-4">
+                    <div class="text-center mb-4">  
                         <i class="fas fa-warehouse fa-3x text-marrom-escuro mb-3"></i>
                         <h1 class="h3 fw-bold mb-0 text-marrom-escuro">Acesso ao Sistema</h1>
                         <p class="text-muted">Gestão de Materiais de Construção</p>

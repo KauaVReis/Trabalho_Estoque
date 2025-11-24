@@ -1,60 +1,55 @@
 <?php
 /*
- * ARQUIVO DE EXCLUSÃO DE CATEGORIA (CORRIGIDO)
- *
- * A LÓGICA PHP (verificar confirmação, excluir, redirecionar)
- * VEM ANTES de carregar o HTML (header.php).
+ * ARQUIVO DE EXCLUSÃO DE USUÁRIO (Lógica no topo)
  */
 
-// 1. Inicia a sessão
+// 1. SESSÃO E SEGURANÇA (SÓ ADMIN)
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
-
-// 2. Segurança: Verifica se o usuário está logado
-if (!isset($_SESSION['user_id'])) {
-    header(header: "Location: ../index.php");
-    exit(); 
+if (!isset($_SESSION['user_id']) || $_SESSION['user_cargo'] !== 'admin') {
+    header("Location: ../dashboard.php");
+    exit();
 }
 
-// 3. Inclui a lógica
-require_once '../../src/categories.php';
+// 2. Inclui a lógica
+require_once '../../src/users.php';
 
-// 4. Pega o ID da URL
-$id_categoria = (int)$_GET['id'];
-if ($id_categoria == 0) {
+// 3. Pega o ID da URL
+$id_usuario = (int)$_GET['id'];
+if ($id_usuario == 0) {
+    header("Location: index.php"); 
+    exit();
+}
+
+// 4. BLOQUEIO DE SEGURANÇA (Não pode se auto-excluir)
+if ($id_usuario == $_SESSION['user_id']) {
     header("Location: index.php");
     exit();
 }
 
-// 5. Verifica se o usuário confirmou (clicou no botão "Sim, Excluir")
+// 5. Verifica se o usuário confirmou
 $confirmado = isset($_GET['confirm']) && $_GET['confirm'] == '1';
 
 if ($confirmado) {
     // ---- AÇÃO DE EXCLUIR ----
-    
-    // 6. Tenta excluir
-    $sucesso = excluirCategoria($id_categoria);
-    
-    // 7. Redireciona de volta para a lista
-    // Funciona agora, pois nenhum HTML foi enviado.
+    $sucesso = excluirUsuario($id_usuario);
     header("Location: index.php");
     exit();
-    
 }
 
 // -----------------------------------------------------------------
 // SE CHEGOU AQUI, é para MOSTRAR A PÁGINA DE CONFIRMAÇÃO.
 // -----------------------------------------------------------------
 
-// 8. Busca os dados da categoria (só para mostrar o nome)
-$categoria = buscarCategoriaPorId($id_categoria);
-if (!$categoria) {
-    header("Location: index.php"); // Categoria não existe
+// 6. Busca os dados do usuário (só para mostrar o nome)
+$usuario = buscarUsuarioPorId($id_usuario);
+if (!$usuario) {
+    header("Location: index.php"); 
     exit();
 }
 
-// 9. Agora sim, podemos carregar o HTML
+// 7. Agora sim, podemos carregar o HTML
 $page_title = 'Confirmar Exclusão';
 $base_path = '../'; 
 $pagina_ativa = 'cadastros'; 
@@ -75,16 +70,16 @@ include '../../templates/header.php'; // HTML começa AQUI
                     <h1 class="h3 fw-bold text-marrom-escuro mb-3">Confirmar Exclusão</h1>
                     
                     <p class="lead mb-4">
-                        Você tem certeza que deseja excluir permanentemente a categoria:
+                        Você tem certeza que deseja excluir permanentemente o usuário:
                     </p>
                     
                     <h3 class="fw-bold text-danger bg-light p-3 rounded">
-                        <?php echo htmlspecialchars($categoria['nome']); ?>
+                        <?php echo htmlspecialchars($usuario['nome']); ?>
+                        (Login: <?php echo htmlspecialchars($usuario['login']); ?>)
                     </h3>
                     
                     <p class="text-muted mt-4">
-                        Atenção: Se esta categoria estiver sendo usada por algum produto,
-                        a exclusão pode falhar.
+                        Esta ação não pode ser desfeita.
                     </p>
 
                     <hr class="my-4">
@@ -96,7 +91,7 @@ include '../../templates/header.php'; // HTML começa AQUI
                         </a>
                         
                         <!-- Link de Confirmação (adiciona &confirm=1) -->
-                        <a href="excluir.php?id=<?php echo $categoria['id']; ?>&confirm=1" 
+                        <a href="excluir.php?id=<?php echo $usuario['id']; ?>&confirm=1" 
                            class="btn btn-lg btn-danger">
                             <i class="fas fa-trash-alt me-2"></i>
                             Sim, Excluir

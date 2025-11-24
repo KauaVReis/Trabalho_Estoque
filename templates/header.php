@@ -3,8 +3,11 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
+// Variáveis de estado
 $usuario_logado = isset($_SESSION['user_id']);
+$is_admin = (isset($_SESSION['user_cargo']) && $_SESSION['user_cargo'] == 'admin'); // <-- NOVO
 
+// Configurações de página (defaults)
 if (!isset($base_path)) {
     $base_path = ''; 
 }
@@ -31,7 +34,6 @@ if (!isset($pagina_ativa)) {
         .btn-login { background-color: #51423D; border-color: #51423D; color: white; }
         .btn-login:hover { background-color: #3a2f2c; border-color: #3a2f2c; }
         
-        /* Ajuste para o link ativo (tanto o link direto quanto o dropdown) */
         .navbar-nav .nav-link.active,
         .navbar-nav .nav-item.active .nav-link {
             font-weight: 600;
@@ -65,10 +67,7 @@ if (!isset($pagina_ativa)) {
                            href="<?php echo $base_path; ?>produto/index.php">Produtos</a>
                     </li>
                     
-                    <!-- 
-                      NOVO MENU DROPDOWN "CADASTROS"
-                      Adicionamos a classe 'active' ao <li> se a $pagina_ativa for 'cadastros'
-                    -->
+                    <!-- Menu Dropdown "Cadastros" -->
                     <li class="nav-item dropdown <?php echo ($pagina_ativa == 'cadastros') ? 'active' : ''; ?>">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownCadastros" role="button" data-bs-toggle="dropdown">
                             Cadastros
@@ -80,18 +79,31 @@ if (!isset($pagina_ativa)) {
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="#">
+                                <a class="dropdown-item disabled" href="#">
                                     <i class="fas fa-truck-moving fa-fw me-2"></i>Fornecedores (Em breve)
                                 </a>
                             </li>
                              <li>
-                                <a class="dropdown-item" href="#">
+                                <a class="dropdown-item disabled" href="#">
                                     <i class="fas fa-balance-scale fa-fw me-2"></i>Unidades (Em breve)
                                 </a>
                             </li>
+
+                            <!-- 
+                              NOVO BLOCO DE ADMINISTRAÇÃO 
+                              Verifica a variável $is_admin
+                            -->
+                            <?php if ($is_admin): ?>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="<?php echo $base_path; ?>usuario/index.php">
+                                        <i class="fas fa-users-cog fa-fw me-2 text-danger"></i>Gerenciar Usuários
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+                            <!-- FIM DO BLOCO DE ADMINISTRAÇÃO -->
                         </ul>
                     </li>
-                    <!-- FIM DO NOVO MENU -->
                     
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown">
@@ -110,4 +122,3 @@ if (!isset($pagina_ativa)) {
         
     </div>
 </nav>
-

@@ -4,7 +4,7 @@
 // Depois, APAGUE ESTE ARQUIVO.
 
 // 1. Defina a senha que você quer usar
-$senha_admin = '211207'; // Mude para sua senha
+$senha_admin = 'ruanlindu'; // Mude para sua senha
 
 // 2. Gera o hash seguro
 $hash = password_hash($senha_admin, PASSWORD_DEFAULT);
