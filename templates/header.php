@@ -79,8 +79,8 @@ if (!isset($pagina_ativa)) {
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item disabled" href="#">
-                                    <i class="fas fa-truck-moving fa-fw me-2"></i>Fornecedores (Em breve)
+                                <li><a class="dropdown-item" href="<?php echo $base_path; ?>fornecedor/index.php">
+                                    <i class="fas fa-truck-moving fa-fw me-2"></i>Fornecedores
                                 </a>
                             </li>
                              <li>
