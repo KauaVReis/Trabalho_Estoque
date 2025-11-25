@@ -3,15 +3,16 @@ require_once __DIR__ . '/db.php';
 
 /**
  * Lista o saldo de estoque agrupado por Produto/SKU.
- * Inclui a próxima data de validade e lista de fornecedores.
+ * Separa saldo válido de saldo vencido.
  */
 function listarEstoqueGeral() {
     $conn = getDBConnection();
     
-    // Query Poderosa:
-    // 1. Soma a quantidade total (SUM)
-    // 2. Pega a data de validade MAIS PRÓXIMA (MIN) apenas de lotes com saldo > 0
-    // 3. Junta os nomes dos fornecedores em uma string (GROUP_CONCAT)
+    // Query Poderosa V2:
+    // 1. saldo_valido: Soma apenas lotes onde validade >= Hoje (ou nula)
+    // 2. saldo_vencido: Soma apenas lotes onde validade < Hoje
+    // 3. proxima_validade: A menor data (MIN) dentre os lotes VÁLIDOS
+    // 4. vencimento_recente: A maior data (MAX) dentre os lotes VENCIDOS (o que venceu por último)
     
     $sql = "SELECT 
                 p.id AS id_produto,
@@ -21,9 +22,31 @@ function listarEstoqueGeral() {
                 sku.estoque_minimo,
                 u.sigla AS unidade,
                 
-                SUM(l.quantidade_atual) AS saldo_total,
+                -- Soma apenas o que NÃO venceu
+                SUM(CASE 
+                    WHEN l.data_validade >= CURDATE() OR l.data_validade IS NULL 
+                    THEN l.quantidade_atual 
+                    ELSE 0 
+                END) AS saldo_valido,
                 
-                MIN(CASE WHEN l.quantidade_atual > 0 THEN l.data_validade END) AS proxima_validade,
+                -- Soma apenas o que JÁ venceu
+                SUM(CASE 
+                    WHEN l.data_validade < CURDATE() 
+                    THEN l.quantidade_atual 
+                    ELSE 0 
+                END) AS saldo_vencido,
+                
+                -- Pega a próxima validade apenas dos itens VÁLIDOS
+                MIN(CASE 
+                    WHEN l.quantidade_atual > 0 AND (l.data_validade >= CURDATE() OR l.data_validade IS NULL)
+                    THEN l.data_validade 
+                END) AS proxima_validade,
+
+                -- Pega a data do item vencido mais recente (para alerta)
+                MAX(CASE 
+                    WHEN l.quantidade_atual > 0 AND l.data_validade < CURDATE()
+                    THEN l.data_validade 
+                END) AS data_vencido_recente,
                 
                 GROUP_CONCAT(DISTINCT f.razao_social SEPARATOR ', ') AS fornecedores
             
@@ -41,7 +64,8 @@ function listarEstoqueGeral() {
     $estoque = [];
     if ($resultado) {
         while ($linha = mysqli_fetch_assoc($resultado)) {
-            $linha['saldo_total'] = (float)$linha['saldo_total'];
+            $linha['saldo_valido'] = (float)$linha['saldo_valido'];
+            $linha['saldo_vencido'] = (float)$linha['saldo_vencido'];
             $estoque[] = $linha;
         }
     }

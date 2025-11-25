@@ -1,6 +1,7 @@
 <?php
 /*
  * LÓGICA DE SAÍDA DE ESTOQUE (FEFO - First-Expired, First-Out)
+ * ATUALIZADO: Proteção contra venda de produtos vencidos.
  */
 
 require_once __DIR__ . '/db.php';
@@ -11,8 +12,6 @@ require_once __DIR__ . '/db.php';
 function listarUltimasSaidas($limite = 50) {
     $conn = getDBConnection();
     
-    // Ajuste o JOIN conforme sua estrutura de SKU/Produto
-    // Aqui, fazemos JOIN com Itens_SKU e depois com Produtos para pegar o nome
     $sql = "SELECT 
                 m.id, 
                 m.data_movimento, 
@@ -22,12 +21,8 @@ function listarUltimasSaidas($limite = 50) {
                 u.nome AS usuario_nome
             FROM Movimentacoes_Estoque m
             JOIN Lotes l ON m.id_lote = l.id
-            -- Lógica Híbrida (SKU ou Produto direto)
             LEFT JOIN Itens_SKU sku ON l.id_item_sku = sku.id
             LEFT JOIN Produtos p ON sku.id_produto = p.id
-            -- Fallback se não tiver SKU (id_item_sku apontando direto para Produto)
-            LEFT JOIN Produtos p_direto ON l.id_item_sku = p_direto.id
-            
             LEFT JOIN Usuarios u ON m.id_usuario = u.id
             WHERE m.tipo_movimento = 'saida_venda'
             ORDER BY m.data_movimento DESC
@@ -40,9 +35,7 @@ function listarUltimasSaidas($limite = 50) {
     
     $saidas = [];
     while ($linha = mysqli_fetch_assoc($resultado)) {
-        // Ajuste de nome se vier do fallback
         if (empty($linha['produto_nome'])) {
-             // Tenta pegar do p_direto se você adicionar na query, ou deixa genérico
              $linha['produto_nome'] = $linha['produto_nome'] ?? $linha['codigo_sku'] ?? "Produto (Verificar ID)"; 
         }
         $saidas[] = $linha;
@@ -54,16 +47,18 @@ function listarUltimasSaidas($limite = 50) {
 
 /**
  * Realiza a BAIXA no estoque usando lógica FEFO.
- * * @param int $id_item_sku ID do SKU (ou Produto) que está saindo.
- * @param float $qtd_solicitada Quantidade total a retirar.
- * @param int $id_usuario Quem está fazendo a saída.
- * @return array Retorna ['sucesso' => bool, 'mensagem' => string]
+ * AGORA IGNORA LOTES VENCIDOS.
  */
 function registrarSaidaFEFO($id_item_sku, $qtd_solicitada, $id_usuario) {
     $conn = getDBConnection();
     
-    // 1. Buscar saldo total disponível para este SKU
-    $sql_saldo = "SELECT SUM(quantidade_atual) as total FROM Lotes WHERE id_item_sku = ?";
+    // 1. Buscar saldo total DISPONÍVEL E VÁLIDO
+    // Adicionamos a condição: data_validade >= HOJE ou data_validade NULA (para itens sem validade)
+    $sql_saldo = "SELECT SUM(quantidade_atual) as total 
+                  FROM Lotes 
+                  WHERE id_item_sku = ? 
+                  AND (data_validade >= CURDATE() OR data_validade IS NULL)";
+                  
     $stmt_saldo = mysqli_prepare($conn, $sql_saldo);
     mysqli_stmt_bind_param($stmt_saldo, "i", $id_item_sku);
     mysqli_stmt_execute($stmt_saldo);
@@ -73,14 +68,16 @@ function registrarSaidaFEFO($id_item_sku, $qtd_solicitada, $id_usuario) {
     mysqli_stmt_close($stmt_saldo);
 
     if ($saldo_total < $qtd_solicitada) {
-        return ['sucesso' => false, 'mensagem' => "Saldo insuficiente. Disponível: " . number_format($saldo_total, 2)];
+        return ['sucesso' => false, 'mensagem' => "Saldo VÁLIDO insuficiente. Disponível para venda: " . number_format($saldo_total, 2)];
     }
 
-    // 2. Buscar Lotes com saldo > 0, ordenados por validade (FEFO)
-    // Se a validade for NULL, ordenamos pelo ID (mais antigo primeiro - FIFO)
+    // 2. Buscar Lotes com saldo > 0 e VÁLIDOS, ordenados por validade (FEFO)
+    // Ignoramos lotes vencidos aqui também
     $sql_lotes = "SELECT id, quantidade_atual, data_validade 
                   FROM Lotes 
-                  WHERE id_item_sku = ? AND quantidade_atual > 0 
+                  WHERE id_item_sku = ? 
+                  AND quantidade_atual > 0 
+                  AND (data_validade >= CURDATE() OR data_validade IS NULL)
                   ORDER BY data_validade ASC, id ASC";
                   
     $stmt_lotes = mysqli_prepare($conn, $sql_lotes);
@@ -106,15 +103,14 @@ function registrarSaidaFEFO($id_item_sku, $qtd_solicitada, $id_usuario) {
             $id_lote = $lote['id'];
             $qtd_no_lote = $lote['quantidade_atual'];
             
-            // Determina quanto tirar deste lote
             $qtd_a_retirar = 0;
             if ($qtd_no_lote >= $qtd_restante) {
-                $qtd_a_retirar = $qtd_restante; // Lote tem tudo o que precisamos
+                $qtd_a_retirar = $qtd_restante; 
             } else {
-                $qtd_a_retirar = $qtd_no_lote; // Lote não tem tudo, zera ele e continua
+                $qtd_a_retirar = $qtd_no_lote; 
             }
 
-            // Atualiza o Lote (diminui a quantidade atual)
+            // Atualiza o Lote
             $nova_qtd = $qtd_no_lote - $qtd_a_retirar;
             $sql_update = "UPDATE Lotes SET quantidade_atual = ? WHERE id = ?";
             $stmt_up = mysqli_prepare($conn, $sql_update);
@@ -122,8 +118,7 @@ function registrarSaidaFEFO($id_item_sku, $qtd_solicitada, $id_usuario) {
             mysqli_stmt_execute($stmt_up);
             mysqli_stmt_close($stmt_up);
 
-            // Registra Movimentação 
-            // (Saída é registrada como valor positivo na quantidade, o tipo 'saida_venda' indica que saiu)
+            // Registra Movimentação
             $tipo = 'saida_venda';
             $sql_mov = "INSERT INTO Movimentacoes_Estoque (id_lote, id_usuario, tipo_movimento, quantidade, data_movimento) 
                         VALUES (?, ?, ?, ?, NOW())";

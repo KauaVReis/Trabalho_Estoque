@@ -38,36 +38,33 @@ $lista_estoque = listarEstoqueGeral();
                     <thead class="table-light">
                         <tr>
                             <th>SKU / Produto</th>
-                            <th>Fornecedores (Atuais)</th>
-                            <th class="text-center">Saldo</th>
+                            <th class="text-center">Saldo Disponível</th>
                             <th class="text-center">Próx. Validade</th>
-                            <th class="text-center">Status</th>
+                            <th class="text-center">Status / Vencidos</th>
                             <th class="text-end">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($lista_estoque as $item): ?>
                         <tr>
-                            <!-- Coluna Produto/SKU -->
+                            <!-- Coluna Produto -->
                             <td>
                                 <div class="fw-bold"><?php echo htmlspecialchars($item['produto_nome']); ?></div>
                                 <div class="text-muted small"><?php echo htmlspecialchars($item['codigo_sku']); ?></div>
-                            </td>
-                            
-                            <!-- Coluna Fornecedores -->
-                            <td>
-                                <small class="text-secondary">
-                                    <?php echo !empty($item['fornecedores']) ? htmlspecialchars($item['fornecedores']) : '-'; ?>
-                                </small>
+                                <div class="text-muted smaller" style="font-size: 0.8em;">
+                                    Forn: <?php echo !empty($item['fornecedores']) ? htmlspecialchars($item['fornecedores']) : '-'; ?>
+                                </div>
                             </td>
 
-                            <!-- Coluna Saldo -->
+                            <!-- Coluna Saldo (Apenas Válidos) -->
                             <td class="text-center">
-                                <span class="fw-bold fs-5"><?php echo number_format($item['saldo_total'], 2, ',', '.'); ?></span> 
+                                <span class="fw-bold fs-5 text-success">
+                                    <?php echo number_format($item['saldo_valido'], 2, ',', '.'); ?>
+                                </span> 
                                 <small class="text-muted"><?php echo htmlspecialchars($item['unidade']); ?></small>
                             </td>
                             
-                            <!-- Coluna Validade -->
+                            <!-- Coluna Próxima Validade (Dos Válidos) -->
                             <td class="text-center">
                                 <?php 
                                     if ($item['proxima_validade']) {
@@ -76,35 +73,50 @@ $lista_estoque = listarEstoqueGeral();
                                         $dias_para_vencer = ($data_val - $hoje) / (60 * 60 * 24);
                                         
                                         $badge_class = 'bg-success';
-                                        $texto_aviso = '';
-
-                                        if ($dias_para_vencer < 0) {
-                                            $badge_class = 'bg-dark'; // Vencido
-                                            $texto_aviso = '(Vencido)';
-                                        } elseif ($dias_para_vencer < 30) {
-                                            $badge_class = 'bg-danger'; // Crítico
-                                        } elseif ($dias_para_vencer < 90) {
-                                            $badge_class = 'bg-warning text-dark'; // Atenção
+                                        
+                                        if ($dias_para_vencer < 30) {
+                                            $badge_class = 'bg-warning text-dark'; // Atenção (perto de vencer)
                                         }
 
-                                        echo "<span class='badge $badge_class'>" . date('d/m/Y', $data_val) . " $texto_aviso</span>";
+                                        echo "<span class='badge $badge_class'>" . date('d/m/Y', $data_val) . "</span>";
+                                        if ($dias_para_vencer < 30) {
+                                            echo "<div class='text-danger small fw-bold mt-1'>Atenção!</div>";
+                                        }
                                     } else {
                                         echo '<span class="text-muted small">-</span>';
                                     }
                                 ?>
                             </td>
 
-                            <!-- Coluna Status Estoque -->
+                            <!-- Coluna Status e Vencidos -->
                             <td class="text-center">
+                                <!-- Status do Estoque Válido -->
                                 <?php 
-                                    if ($item['saldo_total'] <= 0) {
-                                        echo '<span class="badge bg-secondary">Zerado</span>';
-                                    } elseif ($item['saldo_total'] <= $item['estoque_minimo']) {
-                                        echo '<span class="badge bg-danger">Baixo</span>';
+                                    if ($item['saldo_valido'] <= 0) {
+                                        echo '<span class="badge bg-secondary mb-1">Sem Estoque</span><br>';
+                                    } elseif ($item['saldo_valido'] <= $item['estoque_minimo']) {
+                                        echo '<span class="badge bg-danger mb-1">Estoque Baixo</span><br>';
                                     } else {
-                                        echo '<span class="badge bg-success">OK</span>';
+                                        echo '<span class="badge bg-light text-dark border mb-1">OK</span><br>';
                                     }
                                 ?>
+
+                                <!-- ALERTA DE VENCIDOS (Se houver) -->
+                                <?php if ($item['saldo_vencido'] > 0): ?>
+                                    <div class="mt-2 p-1 bg-danger bg-opacity-10 border border-danger rounded">
+                                        <small class="text-danger fw-bold d-block">
+                                            <i class="fas fa-exclamation-circle"></i> VENCIDOS
+                                        </small>
+                                        <small class="text-dark">
+                                            Qtd: <strong><?php echo number_format($item['saldo_vencido'], 2, ',', '.'); ?></strong>
+                                        </small>
+                                        <?php if($item['data_vencido_recente']): ?>
+                                            <br><small class="text-muted" style="font-size: 0.75em;">
+                                                Data: <?php echo date('d/m/Y', strtotime($item['data_vencido_recente'])); ?>
+                                            </small>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
                             </td>
                             
                             <td class="text-end">
@@ -123,7 +135,7 @@ $lista_estoque = listarEstoqueGeral();
                         <?php endforeach; ?>
                         
                         <?php if (empty($lista_estoque)): ?>
-                            <tr><td colspan="6" class="text-center p-4 text-muted">Nenhum item com SKU cadastrado ou movimentado.</td></tr>
+                            <tr><td colspan="5" class="text-center p-4 text-muted">Nenhum item com SKU cadastrado.</td></tr>
                         <?php endif; ?>
                     </tbody>
                 </table>

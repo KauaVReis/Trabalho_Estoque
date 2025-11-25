@@ -2,6 +2,7 @@
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
+date_default_timezone_set('America/Sao_Paulo');
 
 // Variáveis de estado
 $usuario_logado = isset($_SESSION['user_id']);
@@ -70,6 +71,13 @@ if (!isset($pagina_ativa)) {
                         <a class="nav-link <?php echo ($pagina_ativa == 'estoque') ? 'active' : ''; ?>" 
                            href="<?php echo $base_path; ?>estoque/index.php">
                            <i class="fas fa-cubes me-1"></i> Estoque
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo ($pagina_ativa == 'validade') ? 'active' : ''; ?>" 
+                           href="<?php echo $base_path; ?>validade/index.php">
+                           <i class="fas fa-calendar-alt me-1"></i> Validades
                         </a>
                     </li>
 
