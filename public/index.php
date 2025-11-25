@@ -1,21 +1,25 @@
 <?php
-// Define o título da página (usado no header.php)
-$page_title = 'Login - Gestão de Depósito';
-
-// Inclui o cabeçalho
-include '../templates/header.php';
-
-// Se o usuário JÁ ESTIVER LOGADO, redireciona para o dashboard
-if (isset($_SESSION['user_id'])) {
-    header("Location: dashboard.php");
-    exit(); // Para o script
+// 1. Inicia a sessão no topo
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
 }
 
-// Verifica se há uma mensagem de erro (enviada pelo login_process.php)
+// 2. Verifica se já está logado ANTES de carregar qualquer HTML
+if (isset($_SESSION['user_id'])) {
+    header("Location: dashboard.php");
+    exit(); // Encerra o script imediatamente
+}
+
+// 3. Configurações da página
+$page_title = 'Login - Gestão de Depósito';
+
+// 4. Agora sim, carrega o cabeçalho HTML
+include '../templates/header.php';
+
+// Verifica mensagem de erro
 $error_message = '';
 if (isset($_SESSION['login_error'])) {
     $error_message = $_SESSION['login_error'];
-    // Limpa o erro da sessão para não mostrar de novo
     unset($_SESSION['login_error']);
 }
 ?>
@@ -33,10 +37,8 @@ if (isset($_SESSION['login_error'])) {
                         <p class="text-muted">Gestão de Materiais de Construção</p>
                     </div>
 
-                    <!-- Formulário de Login -->
                     <form method="POST" action="login_process.php">
                         
-                        <!-- Mostra o erro de login, se existir -->
                         <?php if (!empty($error_message)): ?>
                             <div class="alert alert-danger" role="alert">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
@@ -44,7 +46,6 @@ if (isset($_SESSION['login_error'])) {
                             </div>
                         <?php endif; ?>
 
-                        <!-- ATUALIZADO: De 'email' para 'login' -->
                         <div class="mb-3">
                             <label for="login" class="form-label fw-medium">Login:</label>
                             <input type="text" class="form-control form-control-lg" 
@@ -74,7 +75,5 @@ if (isset($_SESSION['login_error'])) {
 </div>
 
 <?php
-// Inclui o rodapé
 include '../templates/footer.php';
 ?>
-
