@@ -79,7 +79,7 @@ include '../templates/header.php';
 
         <!-- Card 4: Alertas de Validade (Amarelo) -->
         <div class="col-lg-3 col-md-5">
-            <a href="estoque/index.php" class="card card-hover text-dark text-decoration-none h-100" style="background-color: #ECC94B;">
+            <a href="validade/index.php" class="card card-hover text-dark text-decoration-none h-100" style="background-color: #ECC94B;">
                 <div class="card-body text-center p-4 position-relative">
                     
                     <?php if ($lotes_vencendo > 0): ?>
