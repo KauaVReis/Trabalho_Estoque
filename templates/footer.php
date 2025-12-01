@@ -1,6 +1,6 @@
     <!-- Início do Rodapé (opcional) -->
     <footer class="container text-center text-muted py-4 mt-5">
-        <small>&copy; <?php echo date('Y'); ?> - Sistema de Gestão de Depósito</small>
+        <!-- <small>&copy; <?php echo date('Y'); ?> - Sistema de Gestão de Depósito</small> -->
     </footer>
     <!-- Fim do Rodapé -->
 

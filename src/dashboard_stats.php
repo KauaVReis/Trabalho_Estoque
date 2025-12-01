@@ -76,4 +76,35 @@ function contarMovimentacoesHoje() {
     mysqli_close($conn);
     return $row; // Retorna array ['entradas' => X, 'saidas' => Y]
 }
+
+function buscarDadosGraficoMovimentacao($dataInicio, $dataFim) {
+    $conn = getDBConnection();
+    
+    // Query para agrupar por data
+    $sql = "SELECT 
+                DATE(data_movimento) as data,
+                SUM(CASE WHEN tipo_movimento = 'entrada_compra' THEN 1 ELSE 0 END) as entradas,
+                SUM(CASE WHEN tipo_movimento = 'saida_venda' THEN 1 ELSE 0 END) as saidas
+            FROM Movimentacoes_Estoque
+            WHERE DATE(data_movimento) BETWEEN ? AND ?
+            GROUP BY DATE(data_movimento)
+            ORDER BY DATE(data_movimento) ASC";
+            
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "ss", $dataInicio, $dataFim);
+    mysqli_stmt_execute($stmt);
+    
+    $resultado = mysqli_stmt_get_result($stmt);
+    
+    $dados = [];
+    // Inicializa o array para garantir que o gráfico tenha dados mesmo se vazio
+    // (Opcional: preencher dias vazios com 0, mas vamos simplificar retornando apenas dias com movimento)
+    
+    while ($row = mysqli_fetch_assoc($resultado)) {
+        $dados[] = $row;
+    }
+    
+    mysqli_close($conn);
+    return $dados;
+}
 ?>
