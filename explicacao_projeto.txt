@@ -1,0 +1,193 @@
+EXPLICAÇÃO DO PROJETO - GESTÃO DE DEPÓSITO
+
+1. VISÃO GERAL
+Este é um sistema web para gerenciamento de estoque de materiais de construção. Ele permite o controle de produtos, categorias, fornecedores e movimentações de estoque.
+
+2. TECNOLOGIAS UTILIZADAS
+- Backend: PHP (Nativo/Puro)
+- Frontend: HTML5, CSS3, JavaScript, Bootstrap (para layout responsivo)
+- Banco de Dados: MySQL (Banco: gestao_deposito)
+- Servidor: Apache (via XAMPP)
+
+3. ESTRUTURA DE PASTAS E ARQUIVOS
+O projeto está organizado da seguinte forma:
+
+/ (Raiz do Projeto)
+|-- public/          -> Contém as páginas acessíveis pelo navegador (Frontend)
+|   |-- index.php    -> Página de Login (Ponto de entrada)
+|   |-- dashboard.php -> Painel principal após login
+|   |-- assets/      -> Imagens, CSS e JS customizados
+|   |-- [pastas módulos] -> (produto/, usuario/, etc.) Páginas específicas de cada função
+|
+|-- src/             -> Contém a lógica de negócio e conexão com banco (Backend)
+|   |-- db.php       -> Configuração e conexão com o banco de dados MySQL
+|   |-- auth.php     -> Lógica de autenticação (Login/Sessão)
+|   |-- products.php -> Funções de CRUD para produtos
+|   |-- [outros.php] -> Lógica para usuários, fornecedores, etc.
+|
+|-- templates/       -> Partes reutilizáveis do layout
+|   |-- header.php   -> Cabeçalho (Menu, CSS)
+|   |-- footer.php   -> Rodapé (Scripts, Copyright)
+
+4. FLUXO DE FUNCIONAMENTO
+- O usuário acessa o sistema e cai na tela de login (`public/index.php`).
+- Ao enviar o formulário, os dados vão para `public/login_process.php`, que usa `src/auth.php` para verificar no banco.
+- Se correto, cria uma sessão e redireciona para `public/dashboard.php`.
+- O painel exibe opções para gerenciar o estoque.
+- As páginas internas (ex: `public/produto/index.php`) carregam funções do `src/` para listar/editar dados.
+
+5. BANCO DE DADOS
+- O sistema conecta no banco `gestao_deposito` via usuário `root` (configurado em `src/db.php`).
+- Utiliza MySQLi para comunicação segura.
+
+6. PONTOS FORTES
+- Estrutura MVC simplificada (Separação de Lógica e Visualização).
+- Código modular (Funções reutilizáveis em `src/`).
+- Interface responsiva com Bootstrap.
+
+7. DETALHAMENTO TÉCNICO DO PHP (ESTRUTURA DE FUNÇÕES)
+O projeto utiliza uma abordagem "Procedural Modular", que é excelente para aprendizado e manutenção simples.
+
+A. Separação de Responsabilidades
+- Em vez de misturar SQL no meio do HTML, todas as operações de banco ficam na pasta `src/`.
+- Exemplo: O arquivo `src/products.php` contém apenas funções como `listarProdutos()` ou `cadastrarProduto()`. Ele não imprime nada na tela (não tem `echo` ou HTML), apenas retorna dados.
+
+B. Anatomia de uma Função Típica
+A maioria das funções no projeto segue este padrão seguro e organizado:
+
+1. Conexão: Chama `getDBConnection()` (do `db.php`) para abrir a linha com o banco.
+2. Preparação (Segurança): Usa `mysqli_prepare` com placeholders (`?`) em vez de colocar variáveis direto na string SQL. Isso previne ataques de SQL Injection.
+3. Bind (Ligação): Usa `mysqli_stmt_bind_param` para dizer ao banco o que é cada `?` (ex: "s" para string, "i" para inteiro).
+4. Execução: Roda o comando no banco.
+5. Retorno:
+   - Se for busca (SELECT): Transforma os resultados em um Array Associativo (lista de dados) e retorna para quem chamou.
+   - Se for ação (INSERT/UPDATE): Retorna `true` ou `false` para indicar sucesso.
+
+C. Por que isso é "Legal"?
+- Reutilização: Você pode chamar `listarProdutos()` na tela de admin, na tela de vendas ou em relatórios, sem reescrever o SQL.
+- Limpeza: O arquivo HTML (`public/index.php`) fica limpo, contendo apenas `foreach ($produtos as $p) { ... }`, sem sujeira de banco de dados.
+- Manutenção: Se precisar mudar a senha do banco, muda só em `db.php`. Se precisar mudar uma regra de produto, muda só em `products.php`.
+
+8. DETALHAMENTO TÉCNICO DO HTML (ESTRUTURA DE PÁGINAS)
+O projeto utiliza HTML5 para criar uma interface moderna e responsiva.
+
+A. Estrutura Básica
+Cada página HTML (`public/index.php`, `public/dashboard.php`, etc.) segue este padrão:
+
+1. Inclui o cabeçalho (`templates/header.php`), que contém o menu e o CSS.
+2. Contém o conteúdo específico da página.
+3. Inclui o rodapé (`templates/footer.php`), que contém os scripts e o rodapé.
+
+B. Responsividade
+- Utiliza Bootstrap para garantir que a interface funcione bem em todos os dispositivos.
+- O menu é responsivo e pode ser fechado em telas pequenas.
+
+C. Exemplo de uma Página
+Veja como a página de produtos (`public/produto/index.php`) é construída:
+
+```php
+<?php include 'templates/header.php'; ?>
+
+<h1>Produtos</h1>
+
+<?php
+$produtos = listarProdutos();
+foreach ($produtos as $p) {
+    echo "<div class='produto'>";
+    echo "<h2>{$p['nome']}</h2>";
+    echo "<p>{$p['descricao']}</p>";
+    echo "<p>Preço: R$ {$p['preco']}</p>";
+    echo "</div>";
+}
+?>
+
+<?php include 'templates/footer.php'; ?>
+```
+
+D. Por que isso é "Legal"?
+- Reutilização: O cabeçalho e o rodapé são reutilizados em todas as páginas, evitando repetição de código.
+- Responsividade: A interface é otimizada para todos os dispositivos, desde smartphones até desktops.
+- Simplicidade: O HTML é limpo e fácil de entender, sem sujeira de PHP ou banco de dados.
+
+9. DETALHAMENTO TÉCNICO DO CSS (ESTILIZAÇÃO)
+O projeto utiliza CSS3 para estilizar a interface.
+
+A. Estrutura Básica
+O arquivo `public/assets/css/style.css` contém estilos para:
+
+1. Layout: Define a estrutura da página (cores, fontes, espaçamentos).
+2. Responsividade: Garante que a interface funcione bem em todos os dispositivos.
+3. Componentes: Estilos para botões, menus, tabelas, etc.
+
+B. Exemplo de Estilo
+Veja como o arquivo `style.css` define estilos para uma tabela de produtos:
+
+```css
+.table {
+    width: 100%;
+    max-width: 1200px;
+    margin: 20px auto;
+}
+
+.table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.table .btn {
+    margin-right: 5px;
+}
+```
+
+C. Por que isso é "Legal"?
+- Simplicidade: O CSS é simples e fácil de entender, sem sujeira de HTML ou PHP.
+- Responsividade: A interface é otimizada para todos os dispositivos, desde smartphones até desktops.
+- Reutilização: Os estilos são reutilizados em todas as páginas, evitando repetição de código.
+
+10. DETALHAMENTO TÉCNICO DO JS (INTERACTIVE)
+O projeto utiliza JavaScript para adicionar interatividade à interface.
+
+A. Estrutura Básica
+O arquivo `public/assets/js/script.js` contém scripts para:
+
+1. Manipulação de eventos: Adiciona interatividade aos botões e campos de entrada.
+2. Validação: Valida os dados inseridos pelo usuário.
+3. Navegação: Adiciona funcionalidade ao menu e aos botões de ação.
+
+B. Exemplo de Script
+Veja como o arquivo `script.js` define scripts para uma página de produtos:
+
+```javascript
+// Adiciona interatividade aos botões de ação
+function adicionarProduto() {
+    // código para adicionar produto
+}
+
+function editarProduto(id) {
+    // código para editar produto
+}
+
+function excluirProduto(id) {
+    // código para excluir produto
+}
+```
+
+C. Por que isso é "Legal"?
+- Simplicidade: O JavaScript é simples e fácil de entender, sem sujeira de HTML ou PHP.
+- Interatividade: A interface é interativa e permite que o usuário interaja com os dados.
+- Reutilização: Os scripts são reutilizados em todas as páginas, evitando repetição de código.
+
+11. DETALHAMENTO TÉCNICO DO BANCO DE DADOS (ESTRUTURA DE TABELAS)
+O projeto utiliza MySQL para armazenar os dados do sistema.
+
+A. Estrutura Básica
+O banco de dados `gestao_deposito` contém as seguintes tabelas:
+
+1. `produtos`: Armazena os dados dos produtos.
+2. `categorias`: Armazena os dados das categorias.
+3. `fornecedores`: Armazena os dados dos fornecedores.
+4. `usuarios`: Armazena
