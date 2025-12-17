@@ -178,6 +178,11 @@ if (!isset($pagina_ativa)) {
                                             <i class="fas fa-users-cog fa-fw me-2 text-danger"></i>Gerenciar Usuários
                                         </a>
                                     </li>
+                                    <li>
+                                        <a class="dropdown-item" href="<?php echo $base_path; ?>admin/index.php">
+                                            <i class="fas fa-tools fa-fw me-2 text-danger"></i>Ferramentas Adm
+                                        </a>
+                                    </li>
                                 <?php endif; ?>
                             </ul>
                         </li>

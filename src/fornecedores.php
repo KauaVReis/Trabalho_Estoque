@@ -54,6 +54,11 @@ function buscarFornecedorPorId($id) {
  */
 function cadastrarFornecedor($razao_social, $cnpj, $contato_nome, $contato_telefone) {
     $conn = getDBConnection();
+    
+    // Remove tudo que não for número
+    $cnpj = preg_replace('/\D/', '', $cnpj);
+    $contato_telefone = preg_replace('/\D/', '', $contato_telefone);
+
     $sql = "INSERT INTO Fornecedores (razao_social, cnpj, contato_nome, contato_telefone) VALUES (?, ?, ?, ?)";
     $stmt = mysqli_prepare($conn, $sql);
     
@@ -74,6 +79,10 @@ function cadastrarFornecedor($razao_social, $cnpj, $contato_nome, $contato_telef
 function atualizarFornecedor($id, $razao_social, $cnpj, $contato_nome, $contato_telefone) {
     $conn = getDBConnection();
     
+    // Remove tudo que não for número
+    $cnpj = preg_replace('/\D/', '', $cnpj);
+    $contato_telefone = preg_replace('/\D/', '', $contato_telefone);
+
     $sql = "UPDATE Fornecedores SET razao_social = ?, cnpj = ?, contato_nome = ?, contato_telefone = ? WHERE id = ?";
     $stmt = mysqli_prepare($conn, $sql);
     

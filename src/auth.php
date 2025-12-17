@@ -39,7 +39,17 @@ function attemptLogin($login, $senha) {
         $_SESSION['user_name'] = $usuario['nome']; // <-- NOVO
         $_SESSION['user_cargo'] = $usuario['cargo']; // <-- NOVO E IMPORTANTE
         
+        // Log de Sucesso
+        require_once __DIR__ . '/logger.php';
+        registrarLog('Login Sucesso', null, $usuario['id']);
+
         $sucesso = true;
+    } else {
+        // Log de Falha (Tentativa)
+        // Se achou o usuário mas errou a senha, loga o ID. Se não, loga null.
+        require_once __DIR__ . '/logger.php';
+        $id_tentativa = $usuario ? $usuario['id'] : null;
+        registrarLog('Login Falha', ['login_tentado' => $login], $id_tentativa);
     }
     
     mysqli_stmt_close($stmt);

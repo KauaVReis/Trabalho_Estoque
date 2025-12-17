@@ -107,4 +107,42 @@ function buscarDadosGraficoMovimentacao($dataInicio, $dataFim) {
     mysqli_close($conn);
     return $dados;
 }
+
+/**
+ * Busca os últimos N produtos cadastrados.
+ */
+function listarProdutosRecentes($limite = 5) {
+    $conn = getDBConnection();
+    $sql = "SELECT id, nome FROM Produtos ORDER BY id DESC LIMIT ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $limite);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    
+    $dados = [];
+    while ($row = mysqli_fetch_assoc($res)) {
+        $dados[] = $row;
+    }
+    mysqli_close($conn);
+    return $dados;
+}
+
+/**
+ * Busca os últimos N usuários cadastrados.
+ */
+function listarUsuariosRecentes($limite = 5) {
+    $conn = getDBConnection();
+    $sql = "SELECT id, nome, login, cargo FROM Usuarios ORDER BY id DESC LIMIT ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $limite);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    
+    $dados = [];
+    while ($row = mysqli_fetch_assoc($res)) {
+        $dados[] = $row;
+    }
+    mysqli_close($conn);
+    return $dados;
+}
 ?>

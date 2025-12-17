@@ -58,6 +58,11 @@ function cadastrarProduto($nome, $descricao, $id_categoria) {
     
     $sucesso = mysqli_stmt_execute($stmt);
     
+    if ($sucesso) {
+        require_once __DIR__ . '/logger.php';
+        registrarLog('Produto Criado', ['nome' => $nome, 'categoria' => $id_categoria]);
+    }
+    
     mysqli_stmt_close($stmt);
     mysqli_close($conn);
     
@@ -130,6 +135,11 @@ function atualizarProduto($id, $nome, $descricao, $id_categoria) {
     // 4. Executa
     $sucesso = mysqli_stmt_execute($stmt);
     
+    if ($sucesso) {
+        require_once __DIR__ . '/logger.php';
+        registrarLog('Produto Atualizado', ['id' => $id, 'novo_nome' => $nome]);
+    }
+    
     // 5. Fecha
     mysqli_stmt_close($stmt);
     mysqli_close($conn);
@@ -161,6 +171,11 @@ function excluirProduto($id) {
     // 4. Executa
     $sucesso = mysqli_stmt_execute($stmt);
     
+    if ($sucesso) {
+        require_once __DIR__ . '/logger.php';
+        registrarLog('Produto Excluído', ['id_excluido' => $id]);
+    }
+    
     // 5. Fecha
     mysqli_stmt_close($stmt);
     mysqli_close($conn);
@@ -168,4 +183,3 @@ function excluirProduto($id) {
     return $sucesso;
 }
 ?>
-

@@ -13,6 +13,7 @@ if (!isset($_SESSION['user_id'])) {
 
 // Lógica: Busca os fornecedores no banco
 require_once '../../src/fornecedores.php';
+require_once '../../src/utils.php'; // <-- Importa os helpers
 $lista_de_fornecedores = listarFornecedores();
 ?>
 
@@ -48,9 +49,9 @@ $lista_de_fornecedores = listarFornecedores();
                     <?php foreach ($lista_de_fornecedores as $fornecedor): ?>
                     <tr>
                         <td><?php echo htmlspecialchars($fornecedor['razao_social']); ?></td>
-                        <td><?php echo htmlspecialchars($fornecedor['cnpj']); ?></td>
+                        <td><?php echo htmlspecialchars(formatarDocumento($fornecedor['cnpj'])); ?></td>
                         <td><?php echo htmlspecialchars($fornecedor['contato_nome']); ?></td>
-                        <td><?php echo htmlspecialchars($fornecedor['contato_telefone']); ?></td>
+                        <td><?php echo htmlspecialchars(formatarTelefone($fornecedor['contato_telefone'])); ?></td>
                         <td class="text-center">
                             <a href="editar.php?id=<?php echo $fornecedor['id']; ?>" 
                                class="btn btn-sm btn-warning" title="Editar">
